@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -63,7 +64,7 @@ public class TapProcessorTest {
                 "Company1",
                 "Bus37",
                 "5500005555555559",
-                TripStatus.COMPLETED
+                Trip.Status.COMPLETED
         );
 
         Trip trip2 = new Trip(
@@ -76,7 +77,7 @@ public class TapProcessorTest {
                 "Company1",
                 "Bus36",
                 "4111111111111111",
-                TripStatus.INCOMPLETE
+                Trip.Status.INCOMPLETE
         );
 
         List<Trip> trips = Arrays.asList(trip1, trip2);
@@ -99,4 +100,70 @@ public class TapProcessorTest {
         // Verify the output
         assertEquals(expectedOutput, stringWriter.toString());
     }
+
+    @Test
+    public void testGenerateTripsFrom_CompleteTrip() {
+        Tap onTap = new Tap(1, LocalDateTime.of(2023, 1, 22, 13, 0), "ON", "Stop1", "Company1", "Bus37", "5500005555555559");
+        Tap offTap = new Tap(3, LocalDateTime.of(2023, 1, 22, 13, 10), "OFF", "Stop2", "Company1", "Bus37", "5500005555555559");
+        List<Tap> taps = Arrays.asList(onTap, offTap);
+        List<Trip> trips = TapProcessor.generateTripsFrom(taps);
+
+        assertEquals(1, trips.size());
+
+        Trip trip = trips.get(0);
+        assertEquals(LocalDateTime.of(2023, 1, 22, 13, 0), trip.getStarted());
+        assertEquals(LocalDateTime.of(2023, 1, 22, 13, 10), trip.getFinished());
+        assertEquals(Trip.Status.COMPLETED, trip.getStatus());
+    }
+
+    @Test
+    public void testGenerateTripsFrom_CancelledTrip() {
+        Tap onTap = new Tap(1, LocalDateTime.of(2023, 1, 22, 13, 0), "ON", "Stop1", "Company1", "Bus37", "5500005555555559");
+        Tap offTap = new Tap(2, LocalDateTime.of(2023, 1, 22, 13, 5), "OFF", "Stop1", "Company1", "Bus37", "5500005555555559");
+        List<Tap> taps = Arrays.asList(onTap, offTap);
+        List<Trip> trips = TapProcessor.generateTripsFrom(taps);
+
+        assertEquals(1, trips.size());
+
+        Trip trip = trips.get(0);
+        assertEquals(LocalDateTime.of(2023, 1, 22, 13, 0), trip.getStarted());
+        assertEquals(LocalDateTime.of(2023, 1, 22, 13, 5), trip.getFinished());
+        assertEquals(Trip.Status.CANCELLED, trip.getStatus());
+    }
+
+    @Test
+    public void testGenerateTripsFrom_IncompleteTrip() {
+        Tap onTap = new Tap(1, LocalDateTime.of(2023, 1, 22, 13, 0), "ON", "Stop1", "Company1", "Bus37", "5500005555555559");
+        List<Tap> taps = Collections.singletonList(onTap);
+        List<Trip> trips = TapProcessor.generateTripsFrom(taps);
+
+        assertEquals(1, trips.size());
+
+        Trip trip = trips.get(0);
+        assertEquals(LocalDateTime.of(2023, 1, 22, 13, 0), trip.getStarted());
+        assertEquals(Trip.Status.INCOMPLETE, trip.getStatus());
+    }
+
+    @Test
+    public void testGenerateTripsFrom_TripNotFound() {
+        Tap onTap = new Tap(1, LocalDateTime.of(2023, 1, 22, 13, 0), "OFF", "Stop1", "Company1", "Bus37", "5500005555555559");
+        List<Tap> taps = Collections.singletonList(onTap);
+        List<Trip> trips = TapProcessor.generateTripsFrom(taps);
+
+        assertEquals(0, trips.size());
+    }
+
+    @Test
+    public void testGenerateTripsFrom_DuplicateTap() {
+        Tap onTap = new Tap(1, LocalDateTime.of(2023, 1, 22, 13, 0), "ON", "Stop1", "Company1", "Bus37", "5500005555555559");
+        Tap offTap = new Tap(1, LocalDateTime.of(2023, 1, 22, 13, 5), "ON", "Stop1", "Company1", "Bus37", "5500005555555559");
+        List<Tap> taps = Arrays.asList(onTap, offTap);
+        List<Trip> trips = TapProcessor.generateTripsFrom(taps);
+
+        assertEquals(1, trips.size());
+    }
+
+
+
+
 }

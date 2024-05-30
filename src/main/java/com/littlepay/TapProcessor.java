@@ -9,8 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ltiancong@gmail.com
@@ -45,9 +44,35 @@ public class TapProcessor {
     }
 
     public static List<Trip> generateTripsFrom(List<Tap> taps) {
-        return null;
-    }
+        List<Trip> trips = new ArrayList<>();
+        Map<String, Trip> activeTrips = new HashMap<>();
 
+        for (Tap tap : taps) {
+            String uniqueTripKey = Trip.getUniqueKeyByTap(tap);
+            if ("ON".equals(tap.getTapType())) {
+                if (!activeTrips.containsKey(uniqueTripKey)) {
+                    activeTrips.put(uniqueTripKey, new Trip(tap));
+                } else {
+                    logger.warn("Duplicate tap: {}", uniqueTripKey);
+                }
+            } else {
+                Trip trip = activeTrips.remove(uniqueTripKey);
+                if (trip != null) {
+                    trip.complete(tap);
+                    trips.add(trip);
+                } else {
+                    logger.warn("Trip not found: {}", uniqueTripKey);
+                }
+            }
+        }
+
+        for (Trip trip : activeTrips.values()) {
+            trip.incomplete();
+            trips.add(trip);
+        }
+
+        return trips;
+    }
 
     private static Tap parseTap(String line) {
         String[] fields = line.split(",");
