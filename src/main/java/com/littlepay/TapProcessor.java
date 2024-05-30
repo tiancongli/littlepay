@@ -3,7 +3,7 @@ package com.littlepay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
+import java.io.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -35,12 +35,19 @@ public class TapProcessor {
         return taps;
     }
 
+    public static void exportTripsTo(String filePath, List<Trip> trips) {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filePath))) {
+            exportTripsToWriter(writer, trips);
+        } catch (IOException e) {
+            logger.error("Failed to write trips to file: {}", filePath, e);
+            throw new RuntimeException("Failed to export trips. Please check the logs for more details.", e);
+        }
+    }
+
     public static List<Trip> generateTripsFrom(List<Tap> taps) {
         return null;
     }
 
-    public static void exportTripsTo(String s, List<Trip> trips) {
-    }
 
     private static Tap parseTap(String line) {
         String[] fields = line.split(",");
@@ -53,5 +60,28 @@ public class TapProcessor {
                 fields[5].trim(),
                 fields[6].trim()
         );
+    }
+
+    public static void exportTripsToWriter(BufferedWriter writer, List<Trip> trips) throws IOException {
+        writer.write("Started,Finished,DurationSecs,FromStopId,ToStopId,ChargeAmount,CompanyId,BusID,PAN,Status");
+        writer.newLine();
+        for (Trip trip : trips) {
+            writer.write(formatTrip(trip));
+            writer.newLine();
+        }
+    }
+
+    private static String formatTrip(Trip trip) {
+        return String.format("%s,%s,%d,%s,%s,$%.2f,%s,%s,%s,%s",
+                trip.getStarted(),
+                trip.getFinished(),
+                trip.getDurationSecs(),
+                trip.getFromStopId(),
+                trip.getToStopId(),
+                trip.getChargeAmount(),
+                trip.getCompanyId(),
+                trip.getBusId(),
+                trip.getPan(),
+                trip.getStatus());
     }
 }

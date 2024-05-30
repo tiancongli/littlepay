@@ -19,6 +19,20 @@ public class Trip {
     private String pan;
     private TripStatus status;
 
+    public Trip(LocalDateTime started, LocalDateTime finished, long durationSecs, String fromStopId, String toStopId,
+                double chargeAmount, String companyId, String busId, String pan, TripStatus status) {
+        this.started = started;
+        this.finished = finished;
+        this.durationSecs = durationSecs;
+        this.fromStopId = fromStopId;
+        this.toStopId = toStopId;
+        this.chargeAmount = chargeAmount;
+        this.companyId = companyId;
+        this.busId = busId;
+        this.pan = pan;
+        this.status = status;
+    }
+
     public Trip(Tap onTap, Tap offTap, double chargeAmount, TripStatus status) {
         this.started = onTap.getDateTimeUTC();
         this.finished = offTap.getDateTimeUTC();

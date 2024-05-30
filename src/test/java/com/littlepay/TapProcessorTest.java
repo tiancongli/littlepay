@@ -2,7 +2,11 @@ package com.littlepay;
 
 import org.junit.Test;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -14,7 +18,7 @@ import static org.junit.Assert.assertNotNull;
  */
 public class TapProcessorTest {
     @Test
-    public void ImportTapsFrom() {
+    public void testImportTapsFrom() {
         List<Tap> taps = TapProcessor.importTapsFrom("src/test/resources/taps_test.csv");
         assertNotNull(taps);
         assertEquals(3, taps.size());
@@ -45,5 +49,54 @@ public class TapProcessorTest {
         assertEquals("Company1", tap3.getCompanyId());
         assertEquals("Bus36", tap3.getBusId());
         assertEquals("4111111111111111", tap3.getPan());
+    }
+
+    @Test
+    public void testExportTripsToWriter() throws IOException {
+        Trip trip1 = new Trip(
+                LocalDateTime.of(2023, 1, 22, 13, 0),
+                LocalDateTime.of(2023, 1, 22, 13, 5),
+                300,
+                "Stop1",
+                "Stop2",
+                3.25,
+                "Company1",
+                "Bus37",
+                "5500005555555559",
+                TripStatus.COMPLETED
+        );
+
+        Trip trip2 = new Trip(
+                LocalDateTime.of(2023, 1, 22, 9, 20),
+                LocalDateTime.of(2023, 1, 22, 9, 30),
+                600,
+                "Stop3",
+                "Stop1",
+                7.30,
+                "Company1",
+                "Bus36",
+                "4111111111111111",
+                TripStatus.INCOMPLETE
+        );
+
+        List<Trip> trips = Arrays.asList(trip1, trip2);
+
+        // Use a StringWriter to capture the output
+        StringWriter stringWriter = new StringWriter();
+        BufferedWriter bufferedWriter = new BufferedWriter(stringWriter);
+
+        // Call the method to test
+        TapProcessor.exportTripsToWriter(bufferedWriter, trips);
+
+        // Close the writer to flush the content
+        bufferedWriter.close();
+
+        // Expected CSV output
+        String expectedOutput = "Started,Finished,DurationSecs,FromStopId,ToStopId,ChargeAmount,CompanyId,BusID,PAN,Status\n" +
+                "2023-01-22T13:00,2023-01-22T13:05,300,Stop1,Stop2,$3.25,Company1,Bus37,5500005555555559,COMPLETED\n" +
+                "2023-01-22T09:20,2023-01-22T09:30,600,Stop3,Stop1,$7.30,Company1,Bus36,4111111111111111,INCOMPLETE\n";
+
+        // Verify the output
+        assertEquals(expectedOutput, stringWriter.toString());
     }
 }
