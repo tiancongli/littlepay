@@ -1,4 +1,4 @@
-package main.java.com.littlepay;
+package com.littlepay;
 
 import java.util.List;
 

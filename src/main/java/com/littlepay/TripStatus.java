@@ -1,4 +1,4 @@
-package main.java.com.littlepay;
+package com.littlepay;
 
 /**
  * @author ltiancong@gmail.com
