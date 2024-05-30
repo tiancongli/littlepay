@@ -17,10 +17,10 @@ public class Trip {
     private String companyId;
     private String busId;
     private String pan;
-    private TripStatus status;
+    private Status status;
 
     public Trip(LocalDateTime started, LocalDateTime finished, long durationSecs, String fromStopId, String toStopId,
-                double chargeAmount, String companyId, String busId, String pan, TripStatus status) {
+                double chargeAmount, String companyId, String busId, String pan, Status status) {
         this.started = started;
         this.finished = finished;
         this.durationSecs = durationSecs;
@@ -33,30 +33,38 @@ public class Trip {
         this.status = status;
     }
 
-    public Trip(Tap onTap, Tap offTap, double chargeAmount, TripStatus status) {
+    public Trip(Tap onTap) {
         this.started = onTap.getDateTimeUTC();
-        this.finished = offTap.getDateTimeUTC();
-        this.durationSecs = Duration.between(started, finished).getSeconds();
         this.fromStopId = onTap.getStopId();
-        this.toStopId = offTap.getStopId();
-        this.chargeAmount = chargeAmount;
         this.companyId = onTap.getCompanyId();
         this.busId = onTap.getBusId();
         this.pan = onTap.getPan();
-        this.status = status;
     }
 
-    public Trip(Tap onTap, double chargeAmount, TripStatus status) {
-        this.started = onTap.getDateTimeUTC();
+    enum Status {
+        COMPLETED,
+        INCOMPLETE,
+        CANCELLED
+    }
+
+    public static String getUniqueKeyByTap(Tap tap) {
+        return tap.getBusId() + "-" + tap.getPan() + "-" + tap.getDateTimeUTC().toLocalDate();
+    }
+
+    public void complete(Tap offTap) {
+        this.finished = offTap.getDateTimeUTC();
+        this.durationSecs = Duration.between(started, finished).getSeconds();
+        this.toStopId = offTap.getStopId();
+        this.chargeAmount = Payment.calculateCost(fromStopId, toStopId);
+        this.status = fromStopId.equals(toStopId) ? Status.CANCELLED : Status.COMPLETED;
+    }
+
+    public void incomplete() {
         this.finished = null;
         this.durationSecs = 0;
-        this.fromStopId = onTap.getStopId();
         this.toStopId = null;
-        this.chargeAmount = chargeAmount;
-        this.companyId = onTap.getCompanyId();
-        this.busId = onTap.getBusId();
-        this.pan = onTap.getPan();
-        this.status = status;
+        this.chargeAmount = Payment.calculateCost(fromStopId);
+        this.status = Status.INCOMPLETE;
     }
 
     public LocalDateTime getStarted() {
@@ -95,7 +103,7 @@ public class Trip {
         return pan;
     }
 
-    public TripStatus getStatus() {
+    public Status getStatus() {
         return status;
     }
 }
