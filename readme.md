@@ -122,3 +122,6 @@ Contains the main logic for processing taps and generating trips.
 ### `Payment`
 
 Contains fare rules and methods for calculating trip costs.
+
+### `CSVTool`
+Provides general CSV import and export functionality. Handles reading and writing of CSV files using functional interfaces for custom processing.
