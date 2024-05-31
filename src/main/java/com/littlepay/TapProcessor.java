@@ -3,39 +3,21 @@ package com.littlepay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
 import java.util.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class TapProcessor {
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
     private static final Logger logger = LoggerFactory.getLogger(TapProcessor.class);
 
     public static List<Tap> importTapsFrom(String filePath) {
-        List<Tap> taps = new ArrayList<>();
-        try (BufferedReader bufferedReader = Files.newBufferedReader(Paths.get(filePath))) {
-            bufferedReader.readLine(); // Skip header
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                taps.add(parseTap(line));
-            }
-        } catch (IOException e) {
-            logger.error("Failed to read taps from file: {}", filePath, e);
-            throw new RuntimeException("Failed to import taps. Please check the logs for more details.", e);
-        }
-        return taps;
+        return CSVTool.importFrom(filePath, TapProcessor::parseTap);
     }
 
     public static void exportTripsTo(String filePath, List<Trip> trips) {
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(filePath))) {
-            exportTripsToWriter(writer, trips);
-        } catch (IOException e) {
-            logger.error("Failed to write trips to file: {}", filePath, e);
-            throw new RuntimeException("Failed to export trips. Please check the logs for more details.", e);
-        }
+        String header = "Started,Finished,DurationSecs,FromStopId,ToStopId,ChargeAmount,CompanyId,BusID,PAN,Status";
+        CSVTool.exportTo(filePath, trips, TapProcessor::formatTrip, header);
     }
 
     public static List<Trip> generateTripsFrom(List<Tap> taps) {
@@ -43,7 +25,6 @@ public class TapProcessor {
         Map<String, Trip> activeTrips = new HashMap<>();
 
         taps.forEach(tap -> processTap(tap, activeTrips, generatedTrips));
-
         processRemainingTrips(activeTrips, generatedTrips);
 
         return generatedTrips;
@@ -60,15 +41,6 @@ public class TapProcessor {
                 fields[5].trim(),
                 fields[6].trim()
         );
-    }
-
-    public static void exportTripsToWriter(BufferedWriter writer, List<Trip> trips) throws IOException {
-        writer.write("Started,Finished,DurationSecs,FromStopId,ToStopId,ChargeAmount,CompanyId,BusID,PAN,Status");
-        writer.newLine();
-        for (Trip trip : trips) {
-            writer.write(formatTrip(trip));
-            writer.newLine();
-        }
     }
 
     private static String formatTrip(Trip trip) {

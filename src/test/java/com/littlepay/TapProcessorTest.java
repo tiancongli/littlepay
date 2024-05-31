@@ -1,100 +1,40 @@
 package com.littlepay;
 
 import org.junit.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.StringWriter;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.*;
 
 public class TapProcessorTest {
     @Test
-    public void testImportTapsFrom() {
-        List<Tap> taps = TapProcessor.importTapsFrom("src/test/resources/taps_test.csv");
-        assertNotNull(taps);
-        assertEquals(3, taps.size());
+    public void testImportTaps() {
+        try (MockedStatic<CSVTool> mockedCSVTool = Mockito.mockStatic(CSVTool.class)) {
+            Tap tap = new Tap(1, LocalDateTime.now(), Tap.Type.ON, "Stop1", "Company1", "Bus37", "5500005555555559");
+            List<Tap> taps = List.of(tap);
 
-        Tap tap1 = taps.get(0);
-        assertEquals(1, tap1.getId());
-        assertEquals(LocalDateTime.parse("2023-01-22T13:00:00"), tap1.getDateTimeUTC());
-        assertEquals(Tap.Type.ON, tap1.getTapType());
-        assertEquals("Stop1", tap1.getStopId());
-        assertEquals("Company1", tap1.getCompanyId());
-        assertEquals("Bus37", tap1.getBusId());
-        assertEquals("5500005555555559", tap1.getPan());
+            mockedCSVTool.when(() -> CSVTool.importFrom(anyString(), any())).thenReturn(taps);
 
-        Tap tap2 = taps.get(1);
-        assertEquals(2, tap2.getId());
-        assertEquals(LocalDateTime.parse("2023-01-22T13:05:00"), tap2.getDateTimeUTC());
-        assertEquals(Tap.Type.OFF, tap2.getTapType());
-        assertEquals("Stop2", tap2.getStopId());
-        assertEquals("Company1", tap2.getCompanyId());
-        assertEquals("Bus37", tap2.getBusId());
-        assertEquals("5500005555555559", tap2.getPan());
-
-        Tap tap3 = taps.get(2);
-        assertEquals(3, tap3.getId());
-        assertEquals(LocalDateTime.parse("2023-01-22T09:20:00"), tap3.getDateTimeUTC());
-        assertEquals(Tap.Type.ON, tap3.getTapType());
-        assertEquals("Stop3", tap3.getStopId());
-        assertEquals("Company1", tap3.getCompanyId());
-        assertEquals("Bus36", tap3.getBusId());
-        assertEquals("4111111111111111", tap3.getPan());
+            List<Tap> importedTaps = TapProcessor.importTapsFrom("src/test/resources/taps_test.csv");
+            assertEquals(1, importedTaps.size());
+            assertEquals(tap, importedTaps.get(0));
+        }
     }
 
     @Test
-    public void testExportTripsToWriter() throws IOException {
-        Trip trip1 = new Trip(
-                LocalDateTime.of(2023, 1, 22, 13, 0),
-                LocalDateTime.of(2023, 1, 22, 13, 5),
-                300,
-                "Stop1",
-                "Stop2",
-                3.25,
-                "Company1",
-                "Bus37",
-                "5500005555555559",
-                Trip.Status.COMPLETED
-        );
+    public void testExportTrips() {
+        try (MockedStatic<CSVTool> mockedCSVTool = Mockito.mockStatic(CSVTool.class)) {
+            Trip trip = new Trip(LocalDateTime.now(), LocalDateTime.now(), 600, "Stop1", "Stop2", 3.25, "Company1", "Bus37", "5500005555555559", Trip.Status.COMPLETED);
+            List<Trip> trips = List.of(trip);
 
-        Trip trip2 = new Trip(
-                LocalDateTime.of(2023, 1, 22, 9, 20),
-                LocalDateTime.of(2023, 1, 22, 9, 30),
-                600,
-                "Stop3",
-                "Stop1",
-                7.30,
-                "Company1",
-                "Bus36",
-                "4111111111111111",
-                Trip.Status.INCOMPLETE
-        );
-
-        List<Trip> trips = Arrays.asList(trip1, trip2);
-
-        // Use a StringWriter to capture the output
-        StringWriter stringWriter = new StringWriter();
-        BufferedWriter bufferedWriter = new BufferedWriter(stringWriter);
-
-        // Call the method to test
-        TapProcessor.exportTripsToWriter(bufferedWriter, trips);
-
-        // Close the writer to flush the content
-        bufferedWriter.close();
-
-        // Expected CSV output
-        String expectedOutput = "Started,Finished,DurationSecs,FromStopId,ToStopId,ChargeAmount,CompanyId,BusID,PAN,Status\n" +
-                "2023-01-22T13:00,2023-01-22T13:05,300,Stop1,Stop2,$3.25,Company1,Bus37,5500005555555559,COMPLETED\n" +
-                "2023-01-22T09:20,2023-01-22T09:30,600,Stop3,Stop1,$7.30,Company1,Bus36,4111111111111111,INCOMPLETE\n";
-
-        // Verify the output
-        assertEquals(expectedOutput, stringWriter.toString());
+            TapProcessor.exportTripsTo("src/test/resources/trips_test.csv", trips);
+            String header = "Started,Finished,DurationSecs,FromStopId,ToStopId,ChargeAmount,CompanyId,BusID,PAN,Status";
+            mockedCSVTool.verify(() -> CSVTool.exportTo(anyString(), anyList(), any(), eq(header)));
+        }
     }
 
     @Test

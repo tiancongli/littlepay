@@ -9,9 +9,10 @@ It handles complete, incomplete, and cancelled trips.
 
 ## Features
 - **Taps Reading**: Read and parse tap events from a CSV file.
-- **Trip Generation**: Create and export trips from tap-on and tap-off events.
+- **Trip Generation**: Create trips from tap events.
 - **Charge Calculation**: Calculate the cost of each trip based on predefined fare rules.
 - **Trip Status Handling**: Mark trips as completed, incomplete, or cancelled based on the tap events.
+- **CSV Utility**: General CSV import and export functionality to handle different types of data.
 
 ## Assumptions
 - The tap events recorded in the `taps.csv` file are in increasing order by `DateTimeUTC`.
@@ -26,6 +27,7 @@ It handles complete, incomplete, and cancelled trips.
 
 - **Java**: Core programming language.
 - **JUnit**: Testing framework.
+- **Mockito**: Mocking framework for unit tests.
 - **SLF4J**: Logging framework.
 - **Maven**: Dependency management and build tool.
 
@@ -38,6 +40,7 @@ littlepay/
 │   │   ├── java/
 │   │   │   └── com/
 │   │   │       └── littlepay/
+│   │   │           ├── CSVTool.java
 │   │   │           ├── Main.java
 │   │   │           ├── Payment.java
 │   │   │           ├── Tap.java
@@ -51,6 +54,7 @@ littlepay/
 │   │   ├── java/
 │   │   │   └── com/
 │   │   │       └── littlepay/
+│   │   │           ├── CSVToolTest.java
 │   │   │           ├── PaymentTest.java
 │   │   │           ├── TapProcessorTest.java
 │   │   │           └── TripTest.java
@@ -64,7 +68,7 @@ littlepay/
 
 ### Prerequisites
 
-- Java 8 or higher
+- Java 17 or higher
 - Maven
 
 ### Running the Application
@@ -84,7 +88,10 @@ littlepay/
 
 3. **Run the Application**:
     - Replace `main/resources/taps.csv` with your own file of tap events.
-    - Run the `Main.main()` method to process taps and generate trips.
+    - Execute the `Main.main()` method to process the taps and generate trips. This can be done using Maven:
+      ```bash
+      mvn exec:java
+      ```
     - Find your generated file at `main/resources/trips.csv`.
 
 ### Running Tests
