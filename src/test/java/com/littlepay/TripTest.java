@@ -13,7 +13,7 @@ public class TripTest {
 
     @Before
     public void setUp() {
-        Tap onTap = new Tap(1, LocalDateTime.of(2023, 1, 22, 13, 0), "ON", "Stop1", "Company1", "Bus37", "5500005555555559");
+        Tap onTap = new Tap(1, LocalDateTime.of(2023, 1, 22, 13, 0), Tap.Type.ON, "Stop1", "Company1", "Bus37", "5500005555555559");
         trip = new Trip(onTap);
     }
 
@@ -28,7 +28,7 @@ public class TripTest {
 
     @Test
     public void testCancelTrip() {
-        Tap offTap = new Tap(3, LocalDateTime.of(2023, 1, 22, 13, 10), "OFF", "Stop1", "Company1", "Bus37", "5500005555555559");
+        Tap offTap = new Tap(3, LocalDateTime.of(2023, 1, 22, 13, 10), Tap.Type.OFF, "Stop1", "Company1", "Bus37", "5500005555555559");
         trip.complete(offTap);
 
         assertEquals(LocalDateTime.of(2023, 1, 22, 13, 10), trip.getFinished());
@@ -38,7 +38,7 @@ public class TripTest {
 
     @Test
     public void testCompleteTrip() {
-        Tap offTap = new Tap(3, LocalDateTime.of(2023, 1, 22, 13, 10), "OFF", "Stop2", "Company1", "Bus37", "5500005555555559");
+        Tap offTap = new Tap(3, LocalDateTime.of(2023, 1, 22, 13, 10), Tap.Type.OFF, "Stop2", "Company1", "Bus37", "5500005555555559");
         trip.complete(offTap);
 
         assertEquals(LocalDateTime.of(2023, 1, 22, 13, 10), trip.getFinished());

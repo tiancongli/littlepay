@@ -4,17 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.io.IOException;
+import java.util.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
 
-/**
- * @author ltiancong@gmail.com
- * @date 2024/5/30 13:05
- */
 public class TapProcessor {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
     private static final Logger logger = LoggerFactory.getLogger(TapProcessor.class);
@@ -44,34 +39,14 @@ public class TapProcessor {
     }
 
     public static List<Trip> generateTripsFrom(List<Tap> taps) {
-        List<Trip> trips = new ArrayList<>();
+        List<Trip> generatedTrips = new ArrayList<>();
         Map<String, Trip> activeTrips = new HashMap<>();
 
-        for (Tap tap : taps) {
-            String uniqueTripKey = Trip.getUniqueKeyByTap(tap);
-            if ("ON".equals(tap.getTapType())) {
-                if (!activeTrips.containsKey(uniqueTripKey)) {
-                    activeTrips.put(uniqueTripKey, new Trip(tap));
-                } else {
-                    logger.warn("Duplicate tap: {}", uniqueTripKey);
-                }
-            } else {
-                Trip trip = activeTrips.remove(uniqueTripKey);
-                if (trip != null) {
-                    trip.complete(tap);
-                    trips.add(trip);
-                } else {
-                    logger.warn("Trip not found: {}", uniqueTripKey);
-                }
-            }
-        }
+        taps.forEach(tap -> processTap(tap, activeTrips, generatedTrips));
 
-        for (Trip trip : activeTrips.values()) {
-            trip.incomplete();
-            trips.add(trip);
-        }
+        processRemainingTrips(activeTrips, generatedTrips);
 
-        return trips;
+        return generatedTrips;
     }
 
     private static Tap parseTap(String line) {
@@ -79,7 +54,7 @@ public class TapProcessor {
         return new Tap(
                 Integer.parseInt(fields[0].trim()),
                 LocalDateTime.parse(fields[1].trim(), DATE_TIME_FORMATTER),
-                fields[2].trim(),
+                Tap.Type.valueOf(fields[2].trim().toUpperCase()),
                 fields[3].trim(),
                 fields[4].trim(),
                 fields[5].trim(),
@@ -108,5 +83,40 @@ public class TapProcessor {
                 trip.getBusId(),
                 trip.getPan(),
                 trip.getStatus());
+    }
+
+    private static void processTap(Tap tap, Map<String, Trip> activeTrips, List<Trip> trips) {
+        String uniqueTripKey = Trip.getUniqueKeyByTap(tap);
+
+        if (tap.getTapType() == Tap.Type.ON) {
+            processTapOn(tap, uniqueTripKey, activeTrips);
+        } else {
+            processTapOff(tap, uniqueTripKey, activeTrips, trips);
+        }
+    }
+
+    private static void processTapOn(Tap tap, String uniqueTripKey, Map<String, Trip> activeTrips) {
+        if (activeTrips.containsKey(uniqueTripKey)) {
+            logger.warn("Duplicate tap: {}", uniqueTripKey);
+        } else {
+            activeTrips.put(uniqueTripKey, new Trip(tap));
+        }
+    }
+
+    private static void processTapOff(Tap tap, String uniqueTripKey, Map<String, Trip> activeTrips, List<Trip> trips) {
+        Trip trip = activeTrips.remove(uniqueTripKey);
+        if (trip == null) {
+            logger.warn("Trip not found: {}", uniqueTripKey);
+        } else {
+            trip.complete(tap);
+            trips.add(trip);
+        }
+    }
+
+    private static void processRemainingTrips(Map<String, Trip> activeTrips, List<Trip> trips) {
+        activeTrips.values().forEach(trip -> {
+            trip.incomplete();
+            trips.add(trip);
+        });
     }
 }

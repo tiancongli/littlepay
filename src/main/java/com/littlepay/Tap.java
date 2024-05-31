@@ -2,20 +2,16 @@ package com.littlepay;
 
 import java.time.LocalDateTime;
 
-/**
- * @author ltiancong@gmail.com
- * @date 2024/5/30 12:29
- */
 public class Tap {
     private final int id;
     private LocalDateTime dateTimeUTC;
-    private String tapType;
+    private Type tapType;
     private String stopId;
     private String companyId;
     private String busId;
     private String pan;
 
-    public Tap(int id, LocalDateTime dateTimeUTC, String tapType, String stopId, String companyId, String busId, String pan) {
+    public Tap(int id, LocalDateTime dateTimeUTC, Type tapType, String stopId, String companyId, String busId, String pan) {
         this.id = id;
         this.dateTimeUTC = dateTimeUTC;
         this.tapType = tapType;
@@ -23,6 +19,11 @@ public class Tap {
         this.companyId = companyId;
         this.busId = busId;
         this.pan = pan;
+    }
+
+    public enum Type {
+        ON,
+        OFF
     }
 
     public int getId() {
@@ -33,7 +34,7 @@ public class Tap {
         return dateTimeUTC;
     }
 
-    public String getTapType() {
+    public Type getTapType() {
         return tapType;
     }
 

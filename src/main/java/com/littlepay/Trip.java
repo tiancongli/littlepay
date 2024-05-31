@@ -3,10 +3,6 @@ package com.littlepay;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-/**
- * @author ltiancong@gmail.com
- * @date 2024/5/30 12:26
- */
 public class Trip {
     private LocalDateTime started;
     private LocalDateTime finished;
@@ -41,7 +37,7 @@ public class Trip {
         this.pan = onTap.getPan();
     }
 
-    enum Status {
+    public enum Status {
         COMPLETED,
         INCOMPLETE,
         CANCELLED
